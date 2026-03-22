@@ -45,7 +45,7 @@ $old = isset( $context['old'] ) ? $context['old'] : array();
 					<span class="luf-required">*</span>
 				<?php endif; ?>
 			</label>
-			<input id="luf-file" name="luf_file" type="file" accept=".pdf,.jpg,.jpeg,.png" <?php echo ! empty( $context['file_required'] ) ? 'required' : ''; ?>>
+			<input id="luf-file" name="luf_file" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.zip" <?php echo ! empty( $context['file_required'] ) ? 'required' : ''; ?>>
 			<p class="luf-help">
 				<?php
 				echo esc_html(
@@ -70,7 +70,7 @@ $old = isset( $context['old'] ) ? $context['old'] : array();
 		<input type="hidden" name="luf_redirect_to" value="<?php echo esc_url( $context['redirect_to'] ); ?>">
 
 		<div class="luf-actions">
-			<button class="luf-submit" type="submit"><?php esc_html_e( 'Send Message', 'lightweight-upload-form' ); ?></button>
+			<button class="luf-submit" type="submit"><?php esc_html_e( 'Send', 'lightweight-upload-form' ); ?></button>
 		</div>
 	</form>
 </div>

@@ -15,13 +15,17 @@ function luf_get_allowed_mime_types() {
 		'jpg'  => 'image/jpeg',
 		'jpeg' => 'image/jpeg',
 		'png'  => 'image/png',
+		'doc'  => 'application/msword',
+		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'txt'  => 'text/plain',
+		'zip'  => 'application/zip',
 	);
 
 	return (array) apply_filters( 'luf_allowed_mime_types', $mime_types );
 }
 
 function luf_get_max_upload_size() {
-	$default_size = 5 * 1024 * 1024;
+	$default_size = 10 * 1024 * 1024;
 
 	return (int) apply_filters( 'luf_max_upload_size', $default_size );
 }
