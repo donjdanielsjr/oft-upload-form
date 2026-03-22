@@ -14,11 +14,15 @@ $old = isset( $context['old'] ) ? $context['old'] : array();
 <div class="luf-form-wrapper">
 	<?php if ( ! empty( $context['messages'] ) ) : ?>
 		<div class="luf-notice luf-notice--<?php echo esc_attr( $context['notice_type'] ); ?>" role="alert">
-			<ul class="luf-notice__list">
-				<?php foreach ( $context['messages'] as $message ) : ?>
-					<li><?php echo esc_html( $message ); ?></li>
-				<?php endforeach; ?>
-			</ul>
+			<?php if ( 1 === count( $context['messages'] ) ) : ?>
+				<p class="luf-notice__message"><?php echo esc_html( $context['messages'][0] ); ?></p>
+			<?php else : ?>
+				<ul class="luf-notice__list">
+					<?php foreach ( $context['messages'] as $message ) : ?>
+						<li><?php echo esc_html( $message ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 
