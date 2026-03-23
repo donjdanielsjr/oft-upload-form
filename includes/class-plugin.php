@@ -85,6 +85,7 @@ class LUF_Plugin {
 		add_action( 'admin_menu', array( $this->admin, 'register_menu' ) );
 		add_action( 'admin_init', array( $this->admin, 'handle_csv_export' ) );
 		add_action( 'admin_init', array( $this->admin, 'handle_test_email' ) );
+		add_action( 'admin_init', array( $this->admin, 'handle_bulk_actions' ) );
 	}
 
 	/**

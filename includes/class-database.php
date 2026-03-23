@@ -110,4 +110,30 @@ class LUF_Database {
 
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	}
+
+	/**
+	 * Delete multiple submissions by ID.
+	 *
+	 * @param int[] $submission_ids Submission IDs.
+	 * @return int
+	 */
+	public function delete_submissions( $submission_ids ) {
+		global $wpdb;
+
+		$submission_ids = array_values( array_filter( array_map( 'absint', (array) $submission_ids ) ) );
+
+		if ( empty( $submission_ids ) ) {
+			return 0;
+		}
+
+		$table_name   = luf_get_submissions_table_name();
+		$placeholders = implode( ',', array_fill( 0, count( $submission_ids ), '%d' ) );
+		$query        = $wpdb->prepare(
+			"DELETE FROM {$table_name} WHERE id IN ({$placeholders})",
+			$submission_ids
+		);
+		$result       = $wpdb->query( $query );
+
+		return false === $result ? 0 : (int) $result;
+	}
 }

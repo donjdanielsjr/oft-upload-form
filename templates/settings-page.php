@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 <div class="wrap luf-admin-page">
-	<h1><?php esc_html_e( 'Settings', 'lightweight-upload-form' ); ?></h1>
+	<h1><?php esc_html_e( 'Diagnostics', 'lightweight-upload-form' ); ?></h1>
 
 	<?php if ( 'success' === $test_status ) : ?>
 		<div class="notice notice-success is-dismissible">

@@ -44,7 +44,7 @@ class LUF_Admin {
 	public function register_menu() {
 		$hook = add_menu_page(
 			__( 'Submissions', 'lightweight-upload-form' ),
-			__( 'Submissions', 'lightweight-upload-form' ),
+			__( 'Upload Form', 'lightweight-upload-form' ),
 			'manage_options',
 			'luf-submissions',
 			array( $this, 'render_page' ),
@@ -54,8 +54,8 @@ class LUF_Admin {
 
 		$settings_hook = add_submenu_page(
 			'luf-submissions',
-			__( 'Settings', 'lightweight-upload-form' ),
-			__( 'Settings', 'lightweight-upload-form' ),
+			__( 'Diagnostics', 'lightweight-upload-form' ),
+			__( 'Diagnostics', 'lightweight-upload-form' ),
 			'manage_options',
 			'luf-settings',
 			array( $this, 'render_settings_page' )
@@ -97,6 +97,8 @@ class LUF_Admin {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'lightweight-upload-form' ) );
 		}
 
+		$bulk_status = isset( $_GET['luf_bulk_action'] ) ? sanitize_key( wp_unslash( $_GET['luf_bulk_action'] ) ) : '';
+		$deleted     = isset( $_GET['luf_deleted'] ) ? absint( $_GET['luf_deleted'] ) : 0;
 		$page        = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 		$per_page    = 20;
 		$total_items = $this->database->count_submissions();
@@ -207,6 +209,68 @@ class LUF_Admin {
 				array(
 					'page'           => 'luf-settings',
 					'luf_test_email' => $sent ? 'success' : 'error',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Handle bulk submission actions.
+	 *
+	 * @return void
+	 */
+	public function handle_bulk_actions() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( empty( $_POST['page'] ) || 'luf-submissions' !== sanitize_key( wp_unslash( $_POST['page'] ) ) ) {
+			return;
+		}
+
+		$action = '';
+
+		if ( ! empty( $_POST['action'] ) && '-1' !== $_POST['action'] ) {
+			$action = sanitize_key( wp_unslash( $_POST['action'] ) );
+		} elseif ( ! empty( $_POST['action2'] ) && '-1' !== $_POST['action2'] ) {
+			$action = sanitize_key( wp_unslash( $_POST['action2'] ) );
+		}
+
+		if ( 'delete' !== $action ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to delete submissions.', 'lightweight-upload-form' ) );
+		}
+
+		check_admin_referer( 'luf_bulk_submissions_action' );
+
+		$submission_ids = isset( $_POST['submission_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['submission_ids'] ) ) : array();
+
+		if ( empty( $submission_ids ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'            => 'luf-submissions',
+						'luf_bulk_action' => 'none_selected',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		$deleted_count = $this->database->delete_submissions( $submission_ids );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'            => 'luf-submissions',
+					'luf_bulk_action' => 'delete',
+					'luf_deleted'     => $deleted_count,
 				),
 				admin_url( 'admin.php' )
 			)
