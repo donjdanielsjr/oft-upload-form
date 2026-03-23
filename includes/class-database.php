@@ -99,6 +99,31 @@ class LUF_Database {
 	}
 
 	/**
+	 * Retrieve submissions by ID.
+	 *
+	 * @param int[] $submission_ids Submission IDs.
+	 * @return array
+	 */
+	public function get_submissions_by_ids( $submission_ids ) {
+		global $wpdb;
+
+		$submission_ids = array_values( array_filter( array_map( 'absint', (array) $submission_ids ) ) );
+
+		if ( empty( $submission_ids ) ) {
+			return array();
+		}
+
+		$table_name   = luf_get_submissions_table_name();
+		$placeholders = implode( ',', array_fill( 0, count( $submission_ids ), '%d' ) );
+		$query        = $wpdb->prepare(
+			"SELECT * FROM {$table_name} WHERE id IN ({$placeholders})",
+			$submission_ids
+		);
+
+		return $wpdb->get_results( $query, ARRAY_A );
+	}
+
+	/**
 	 * Count all submissions.
 	 *
 	 * @return int

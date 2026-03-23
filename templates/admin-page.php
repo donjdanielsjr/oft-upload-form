@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap luf-admin-page">
 	<h1><?php esc_html_e( 'Submissions', 'lightweight-upload-form' ); ?></h1>
 
+	<?php $deleted_attachments = isset( $_GET['luf_attachments'] ) ? absint( $_GET['luf_attachments'] ) : 0; ?>
+
 	<?php if ( 'delete' === $bulk_status && $deleted > 0 ) : ?>
 		<div class="notice notice-success is-dismissible">
 			<p>
@@ -21,6 +23,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 						/* translators: %d: number of deleted submissions. */
 						_n( '%d submission deleted.', '%d submissions deleted.', $deleted, 'lightweight-upload-form' ),
 						$deleted
+					)
+				);
+				?>
+			</p>
+		</div>
+	<?php elseif ( 'delete_with_attachments' === $bulk_status && $deleted > 0 ) : ?>
+		<div class="notice notice-success is-dismissible">
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: number of deleted submissions, 2: number of deleted attachments. */
+						_n(
+							'%1$d submission deleted. %2$d attachment deleted.',
+							'%1$d submissions deleted. %2$d attachments deleted.',
+							$deleted,
+							'lightweight-upload-form'
+						),
+						$deleted,
+						$deleted_attachments
 					)
 				);
 				?>
@@ -48,6 +70,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<select name="action" id="bulk-action-selector-top">
 					<option value="-1"><?php esc_html_e( 'Bulk actions', 'lightweight-upload-form' ); ?></option>
 					<option value="delete"><?php esc_html_e( 'Delete', 'lightweight-upload-form' ); ?></option>
+					<option value="delete_with_attachments"><?php esc_html_e( 'Delete with attachments', 'lightweight-upload-form' ); ?></option>
 				</select>
 				<?php submit_button( __( 'Apply', 'lightweight-upload-form' ), 'action', 'doaction', false ); ?>
 			</div>
@@ -119,6 +142,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<select name="action2" id="bulk-action-selector-bottom">
 					<option value="-1"><?php esc_html_e( 'Bulk actions', 'lightweight-upload-form' ); ?></option>
 					<option value="delete"><?php esc_html_e( 'Delete', 'lightweight-upload-form' ); ?></option>
+					<option value="delete_with_attachments"><?php esc_html_e( 'Delete with attachments', 'lightweight-upload-form' ); ?></option>
 				</select>
 				<?php submit_button( __( 'Apply', 'lightweight-upload-form' ), 'action', 'doaction2', false ); ?>
 			</div>

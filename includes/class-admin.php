@@ -238,7 +238,7 @@ class LUF_Admin {
 			$action = sanitize_key( wp_unslash( $_POST['action2'] ) );
 		}
 
-		if ( 'delete' !== $action ) {
+		if ( ! in_array( $action, array( 'delete', 'delete_with_attachments' ), true ) ) {
 			return;
 		}
 
@@ -263,18 +263,57 @@ class LUF_Admin {
 			exit;
 		}
 
+		$deleted_attachments = 0;
+
+		if ( 'delete_with_attachments' === $action ) {
+			$deleted_attachments = $this->delete_submission_attachments( $submission_ids );
+		}
+
 		$deleted_count = $this->database->delete_submissions( $submission_ids );
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'page'            => 'luf-submissions',
-					'luf_bulk_action' => 'delete',
+					'luf_bulk_action' => $action,
 					'luf_deleted'     => $deleted_count,
+					'luf_attachments' => $deleted_attachments,
 				),
 				admin_url( 'admin.php' )
 			)
 		);
 		exit;
+	}
+
+	/**
+	 * Delete attachments associated with selected submissions.
+	 *
+	 * @param int[] $submission_ids Submission IDs.
+	 * @return int
+	 */
+	protected function delete_submission_attachments( $submission_ids ) {
+		$submissions = $this->database->get_submissions_by_ids( $submission_ids );
+
+		if ( empty( $submissions ) ) {
+			return 0;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/post.php';
+
+		$deleted = 0;
+
+		foreach ( $submissions as $submission ) {
+			$attachment_id = ! empty( $submission['attachment_id'] ) ? absint( $submission['attachment_id'] ) : 0;
+
+			if ( ! $attachment_id ) {
+				continue;
+			}
+
+			if ( wp_delete_attachment( $attachment_id, true ) ) {
+				++$deleted;
+			}
+		}
+
+		return $deleted;
 	}
 }
