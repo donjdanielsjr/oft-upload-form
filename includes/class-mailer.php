@@ -28,9 +28,9 @@ class OFTUF_Mailer {
 		$subject = apply_filters(
 			'oftuf_email_subject',
 			sprintf(
-				/* translators: %s: site name. */
-				__( 'New upload form submission on %s', 'oft-upload-form' ),
-				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+				/* translators: %s: submitter name. */
+				__( 'New OFT Upload Form: %s', 'oft-upload-form' ),
+				$submission['name']
 			),
 			$submission,
 			$file_data
