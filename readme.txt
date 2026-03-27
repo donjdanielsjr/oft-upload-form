@@ -1,10 +1,10 @@
-﻿=== OFT Upload Form ===
+=== OFT Upload Form ===
 Contributors: codex
 Tags: contact form, file upload, shortcode
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,9 +47,13 @@ No. Data is preserved unless the `oftuf_delete_data_on_uninstall` option is expl
 
 == Changelog ==
 
+= 1.0.8 =
+
+* Minor release version bump for OFT Upload Form deployment-config update testing.
+
 = 1.0.6 =
 
-* Minor release version bump for OFT Upload Form update testing.
+* Minor release version bump for OFT Upload Form deployment-config update testing.
 
 = 1.0.5 =
 

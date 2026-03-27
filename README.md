@@ -1,4 +1,4 @@
-﻿# OFT Upload Form
+# OFT Upload Form
 
 ## Plugin Version Administration
 
@@ -15,6 +15,15 @@ Update files for this plugin:
 
 The updater reads the installed version from the plugin header in `oft-upload-form.php` and compares it against the remote `version` value in `oft-upload-form.json`.
 
+## Release Source Of Truth
+
+- `deployment.config.json`
+  This file is the release metadata source of truth for deployment builds.
+- F5 runs the deployment build script and generates:
+  - `deployment/oft-upload-form.zip`
+  - `deployment/oft-upload-form.json`
+- The deployment script writes JSON as UTF-8 without BOM to avoid update and AJAX response issues.
+
 ## Files That Control Versions
 
 - `oft-upload-form.php`
@@ -23,29 +32,38 @@ The updater reads the installed version from the plugin header in `oft-upload-fo
   The `OFTUF_VERSION` constant should stay in sync with the plugin header.
 - `readme.txt`
   `Stable tag:` should match the release version.
-- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json`
-  Remote metadata used by WordPress update checks.
+- `deployment.config.json`
+  Release metadata used to generate the deployment JSON.
 - `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.zip`
   Release zip downloaded during updates.
+- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json`
+  Generated remote metadata used by WordPress update checks.
 
 ## Standard Release Process
 
 1. Finish the code changes for the release.
-2. Pick the new version number, for example `1.0.6`.
+2. Pick the new version number, for example `1.0.7`.
 3. Update `oft-upload-form.php`:
    - Change the plugin header `Version:`
    - Change `define( 'OFTUF_VERSION', '...' );`
 4. Update `readme.txt`:
    - Change `Stable tag:`
    - Add the changelog entry
-5. Build the release zip with `oft-upload-form` as the root folder.
-6. Upload these two files to `/plugin-downloads/` on the server:
+5. Update `deployment.config.json`:
+   - Change `version`
+   - Change `last_updated`
+   - Change `sections.changelog`
+6. Press F5 or run the deployment task to build:
+   - `deployment/oft-upload-form.zip`
+   - `deployment/oft-upload-form.json`
+7. Build output uses `oft-upload-form` as the zip root folder.
+8. Upload these two files to `/plugin-downloads/` on the server:
    - `oft-upload-form.json`
    - `oft-upload-form.zip`
-7. Confirm these public URLs load:
+9. Confirm these public URLs load:
    - `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.zip`
    - `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json`
-8. In wp-admin, force an update check and confirm the release appears.
+10. In wp-admin, force an update check and confirm the release appears.
 
 ## Important Version Rule
 
@@ -54,18 +72,20 @@ The remote JSON version must be higher than the installed plugin header version 
 Example:
 
 - Installed version: `1.0.0`
-- Remote version: `1.0.6`
+- Remote version: `1.0.7`
 - Result: update is shown
 
 If both values match, no update is offered.
 
-## Example `oft-upload-form.json`
+## Generated `oft-upload-form.json`
+
+This file is generated from `deployment.config.json` during the deployment build:
 
 ```json
 {
   "name": "OFT Upload Form",
   "slug": "oft-upload-form",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "requires": "6.0",
   "tested": "6.8",
   "requires_php": "7.4",
@@ -75,7 +95,7 @@ If both values match, no update is offered.
   "sections": {
     "description": "Lightweight contact form plugin with shortcode support, a single file upload field, email notifications, and submission storage.",
     "installation": "Install and activate the plugin.",
-    "changelog": "<h4>1.0.6</h4><ul><li>Minor release version bump for OFT Upload Form update testing.</li></ul>"
+    "changelog": "<h4>1.0.7</h4><ul><li>Minor release version bump for OFT Upload Form update testing.</li></ul>"
   },
   "banners": {},
   "icons": {}
@@ -101,7 +121,7 @@ If both values match, no update is offered.
 ### Simulate a version bump
 
 1. Keep the installed plugin at `1.0.0`.
-2. Set remote `oft-upload-form.json` to `1.0.6`.
+2. Set remote `oft-upload-form.json` to `1.0.7`.
 3. Upload the new release zip.
 4. Refresh metadata.
 5. Confirm WordPress shows the update.
@@ -134,5 +154,3 @@ It shows:
 - Whether an update is available
 
 Use `Refresh metadata` to clear the updater cache and fetch the latest metadata.
-
-

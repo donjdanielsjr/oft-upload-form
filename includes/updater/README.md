@@ -1,4 +1,4 @@
-﻿# OFT Plugin Updater
+# OFT Plugin Updater
 
 ## Purpose
 
@@ -15,8 +15,8 @@ It integrates with the native WordPress plugin update UI and does not require:
 
 - `includes/updater/class-oft-plugin-updater.php`
   Reusable updater class
-- `includes/updater/examples/info.json`
-  Starter metadata template you can copy and publish to your server
+- `deployment.config.json`
+  Plugin-specific release metadata used to generate the live deployment JSON in this repo
 
 ## What It Does
 
@@ -44,6 +44,8 @@ For a simpler single-folder setup, which is what this plugin now uses, pass `met
 
 - `https://onefeaturetrap.com/plugin-downloads/{plugin-slug}.json`
 - `https://onefeaturetrap.com/plugin-downloads/{plugin-slug}.zip`
+
+In this plugin, `deployment.config.json` is used to generate the `.json` file during the deployment build so the published metadata stays BOM-free.
 
 ## Required Config
 
@@ -182,4 +184,3 @@ If any of the following happen, the updater does nothing and should not break th
 - Keep the updater generic. Do not hardcode plugin-specific values into the class.
 - Keep plugin-specific values in the config array only.
 - If the metadata host changes in the future, update the class or pass `metadata_url` per plugin.
-
