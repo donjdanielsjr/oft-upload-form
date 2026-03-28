@@ -383,6 +383,10 @@ class OFT_Plugin_Updater {
 			}
 		}
 
+		if ( true === $result ) {
+			$this->installed_version = $this->detect_installed_version();
+		}
+
 		return $result;
 	}
 
