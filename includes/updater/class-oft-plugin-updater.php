@@ -211,7 +211,10 @@ class OFT_Plugin_Updater {
 			return '';
 		}
 		$channel = $this->sanitize_channel( get_option( $this->installed_channel_option_key, '' ) );
-		return isset( $this->channels[ $channel ] ) ? $channel : '';
+		if ( isset( $this->channels[ $channel ] ) ) {
+			return $channel;
+		}
+		return $this->infer_channel_from_version( $this->installed_version );
 	}
 
 	protected function get_pending_switch_channel() {
@@ -236,6 +239,20 @@ class OFT_Plugin_Updater {
 			return true;
 		}
 		return ! empty( $installed_channel ) && ! empty( $metadata['channel'] ) && $metadata['channel'] === $current_channel && $metadata['channel'] !== $installed_channel;
+	}
+
+	protected function infer_channel_from_version( $version ) {
+		if ( ! $this->has_channels() ) {
+			return '';
+		}
+		$version = strtolower( (string) $version );
+		if ( isset( $this->channels['beta'] ) && false !== strpos( $version, 'beta' ) ) {
+			return 'beta';
+		}
+		if ( isset( $this->channels['stable'] ) ) {
+			return 'stable';
+		}
+		return '';
 	}
 
 	public function inject_update( $transient ) {
