@@ -355,6 +355,11 @@ class OFT_Plugin_Updater {
 			$this->redirect_after_channel_change( 'error', $selected_channel );
 		}
 
+		update_option( $this->installed_channel_option_key, $selected_channel );
+		delete_option( $this->switch_option_key );
+		$this->clear_all_cached_metadata();
+		delete_site_transient( 'update_plugins' );
+
 		$this->redirect_after_channel_change( 'switched', $selected_channel );
 	}
 
