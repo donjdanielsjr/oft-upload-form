@@ -47,7 +47,7 @@ No. Data is preserved unless the `oftuf_delete_data_on_uninstall` option is expl
 
 == Changelog ==
 
-= 1.6.1 =
+= 1.6.7-beta.3 =
 
 * Adds a file size setting so you can choose the upload limit that fits your form without editing code.
 * Lets you allow larger file sizes all the way up to what your website can support.

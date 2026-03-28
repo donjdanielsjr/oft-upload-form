@@ -359,6 +359,8 @@ class OFT_Plugin_Updater {
 	}
 
 	protected function perform_channel_upgrade() {
+		$was_active = function_exists( 'is_plugin_active' ) && is_plugin_active( $this->plugin_basename );
+
 		if ( ! class_exists( 'Plugin_Upgrader' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 		}
@@ -366,7 +368,17 @@ class OFT_Plugin_Updater {
 			wp_clean_plugins_cache( false );
 		}
 		$skin = new Automatic_Upgrader_Skin();
-		return ( new Plugin_Upgrader( $skin ) )->upgrade( $this->plugin_basename );
+		$result = ( new Plugin_Upgrader( $skin ) )->upgrade( $this->plugin_basename );
+
+		if ( $was_active && true === $result && function_exists( 'is_plugin_active' ) && ! is_plugin_active( $this->plugin_basename ) ) {
+			$activation_result = activate_plugin( $this->plugin_basename );
+
+			if ( is_wp_error( $activation_result ) ) {
+				return $activation_result;
+			}
+		}
+
+		return $result;
 	}
 
 	protected function redirect_after_channel_change( $status, $channel ) {
