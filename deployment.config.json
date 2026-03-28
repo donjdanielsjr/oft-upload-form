@@ -1,8 +1,8 @@
 {
   "name": "OFT Upload Form",
   "slug": "oft-upload-form",
-  "_note": "Previous build: 1.6.1",
-  "version": "1.6.7-beta.3",
+  "_note": "Previous build: 1.7.0-beta.0",
+  "version": "1.7.0",
   "requires": "6.0",
   "tested": "6.9.4",
   "requires_php": "7.4",
