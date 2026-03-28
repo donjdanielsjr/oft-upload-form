@@ -137,6 +137,8 @@ class OFTUF_Form_Handler {
 			);
 		}
 
+		$submission['id'] = $submission_id;
+
 		$this->mailer->send_notification( $submission, $file_data );
 		$this->record_submission_for_throttle();
 

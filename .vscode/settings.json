@@ -1,0 +1,6 @@
+{
+  "terminal.integrated.env.windows": {
+    "Path": "C:\\Users\\donjd\\AppData\\Roaming\\Local\\lightning-services\\php-7.4.30+6\\bin\\win64;${env:Path}"
+  },
+  "php.validate.executablePath": "C:\\Users\\donjd\\AppData\\Roaming\\Local\\lightning-services\\php-7.4.30+6\\bin\\win64\\php.exe"
+}

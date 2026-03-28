@@ -63,6 +63,29 @@ function oftuf_get_allowed_mime_types() {
 	return (array) apply_filters( 'oftuf_allowed_mime_types', $mime_types );
 }
 
+function oftuf_get_validated_file_type( $tmp_name, $file_name, $allowed_mimes = null ) {
+	$allowed_mimes = is_array( $allowed_mimes ) ? $allowed_mimes : oftuf_get_allowed_mime_types();
+	$file_name     = sanitize_file_name( $file_name );
+	$file_info     = wp_check_filetype_and_ext( $tmp_name, $file_name, $allowed_mimes );
+
+	if ( ! empty( $file_info['ext'] ) && ! empty( $file_info['type'] ) ) {
+		return $file_info;
+	}
+
+	$fallback = wp_check_filetype( $file_name, $allowed_mimes );
+
+	if ( empty( $fallback['ext'] ) || empty( $fallback['type'] ) ) {
+		return $file_info;
+	}
+
+	// Older WordPress/PHP combinations can fail MIME sniffing for valid files.
+	return array(
+		'ext'             => $fallback['ext'],
+		'type'            => $fallback['type'],
+		'proper_filename' => isset( $file_info['proper_filename'] ) ? $file_info['proper_filename'] : false,
+	);
+}
+
 function oftuf_parse_size_to_bytes( $size ) {
 	$size = trim( (string) $size );
 
@@ -227,6 +250,18 @@ function oftuf_get_private_upload_dir() {
 	$upload_dir = wp_upload_dir();
 
 	return trailingslashit( $upload_dir['basedir'] ) . 'oftuf-private';
+}
+
+function oftuf_chmod( $path, $mode ) {
+	if ( function_exists( 'wp_chmod' ) ) {
+		return wp_chmod( $path, $mode );
+	}
+
+	if ( ! function_exists( 'chmod' ) ) {
+		return false;
+	}
+
+	return @chmod( $path, $mode );
 }
 
 function oftuf_ensure_private_upload_dir() {

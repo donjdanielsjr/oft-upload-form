@@ -97,7 +97,7 @@ class OFTUF_Validator {
 		}
 
 		if ( UPLOAD_ERR_OK === $file_error && ! empty( $file['tmp_name'] ) ) {
-			$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file_name, $allowed_mimes );
+			$file_info = oftuf_get_validated_file_type( $file['tmp_name'], $file_name, $allowed_mimes );
 
 			if ( empty( $file_info['ext'] ) || empty( $file_info['type'] ) ) {
 				$errors[] = __( 'The uploaded file type is not allowed.', 'oft-upload-form' );

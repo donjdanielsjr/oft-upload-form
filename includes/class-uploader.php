@@ -29,7 +29,7 @@ class OFTUF_Uploader {
 
 		$allowed_mimes = oftuf_get_allowed_mime_types();
 		$file_name     = sanitize_file_name( $file['name'] );
-		$file_info     = wp_check_filetype_and_ext( $file['tmp_name'], $file_name, $allowed_mimes );
+		$file_info     = oftuf_get_validated_file_type( $file['tmp_name'], $file_name, $allowed_mimes );
 		$private_dir   = oftuf_ensure_private_upload_dir();
 
 		if ( is_wp_error( $private_dir ) ) {
@@ -66,7 +66,7 @@ class OFTUF_Uploader {
 			);
 		}
 
-		wp_chmod( $stored_path, 0640 );
+		oftuf_chmod( $stored_path, 0640 );
 
 		return array(
 			'success' => true,
