@@ -194,18 +194,18 @@ class OFTUF_Admin {
 
 		$output = fopen( 'php://output', 'w' );
 
-		fputcsv( $output, array( 'ID', 'Name', 'Email', 'Message', 'File', 'Attachment ID', 'Created At' ) );
+		// Excel can mis-detect CSV files that begin with an "ID" header as SYLK.
+		fwrite( $output, "\xEF\xBB\xBF" );
+		fputcsv( $output, array( 'Name', 'Email', 'Message', 'File', 'Created At' ) );
 
 		foreach ( $rows as $row ) {
 			fputcsv(
 				$output,
 				array(
-					$row['id'],
 					$this->neutralize_csv_cell( $row['name'] ),
 					$this->neutralize_csv_cell( $row['email'] ),
 					$this->neutralize_csv_cell( $row['message'] ),
-					$this->neutralize_csv_cell( oftuf_get_submission_file_label( $row ) ),
-					$row['attachment_id'],
+					$this->neutralize_csv_cell( $this->get_submission_csv_file_url( $row ) ),
 					$row['created_at'],
 				)
 			);
@@ -467,5 +467,23 @@ class OFTUF_Admin {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Get the CSV-safe file URL for a submission.
+	 *
+	 * @param array $submission Submission row.
+	 * @return string
+	 */
+	protected function get_submission_csv_file_url( $submission ) {
+		if ( ! empty( $submission['file_path'] ) && ! empty( $submission['id'] ) ) {
+			return oftuf_get_submission_download_url( $submission['id'] );
+		}
+
+		if ( ! empty( $submission['file_url'] ) && wp_http_validate_url( $submission['file_url'] ) ) {
+			return $submission['file_url'];
+		}
+
+		return '';
 	}
 }
