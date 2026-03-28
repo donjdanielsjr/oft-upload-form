@@ -47,6 +47,11 @@ No. Data is preserved unless the `oftuf_delete_data_on_uninstall` option is expl
 
 == Changelog ==
 
+= 1.6.7-beta.1 =
+
+* Adds Stable and Beta update tracks so test sites can follow beta builds without production installs seeing them.
+* Lets admins switch tracks immediately from the plugin setup screen while keeping the updater logic reusable inside includes/updater.
+
 = 1.6.6 =
 
 * Adds a file size setting so you can choose the upload limit that fits your form without editing code.

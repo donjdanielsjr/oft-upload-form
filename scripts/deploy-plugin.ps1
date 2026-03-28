@@ -1,24 +1,20 @@
+param(
+	[ValidateSet('stable', 'beta')]
+	[string]$Track = 'beta'
+)
+
 $ErrorActionPreference = 'Stop'
 
 $source = Split-Path -Parent $PSScriptRoot
 $deploymentRoot = Join-Path $source 'deployment'
 $stageRoot = Join-Path $deploymentRoot 'stage'
-$stagePluginRoot = Join-Path $stageRoot 'oft-upload-form'
-$zipPath = Join-Path $deploymentRoot 'oft-upload-form.zip'
 $configPath = Join-Path $source 'deployment.config.json'
-$jsonPath = Join-Path $deploymentRoot 'oft-upload-form.json'
 $mainPluginFile = Join-Path $source 'oft-upload-form.php'
 $readmePath = Join-Path $source 'readme.txt'
+$versionPattern = '[0-9A-Za-z][0-9A-Za-z\.\-\+]*'
 
 function Set-FileContentIfChanged {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string]$Path,
-
-		[Parameter(Mandatory = $true)]
-		[string]$Content
-	)
-
+	param([string]$Path,[string]$Content)
 	$current = Get-Content -LiteralPath $Path -Raw
 	if ($current -cne $Content) {
 		$encoding = New-Object System.Text.UTF8Encoding($false)
@@ -27,45 +23,59 @@ function Set-FileContentIfChanged {
 }
 
 function ConvertTo-HtmlList {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string[]]$Items
-	)
-
-	$listItems = foreach ($item in $Items) {
-		'<li>' + [System.Security.SecurityElement]::Escape($item) + '</li>'
-	}
-
+	param([string[]]$Items)
+	$listItems = foreach ($item in $Items) { '<li>' + [System.Security.SecurityElement]::Escape($item) + '</li>' }
 	return '<ul>' + ($listItems -join '') + '</ul>'
 }
 
 function Get-ReadmeChangelogEntry {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string]$Version,
-
-		[Parameter(Mandatory = $true)]
-		[string[]]$Items
-	)
-
+	param([string]$Version,[string[]]$Items)
 	$lines = @("= $Version =", '')
-	foreach ($item in $Items) {
-		$lines += "* $item"
-	}
-
+	foreach ($item in $Items) { $lines += "* $item" }
 	return ($lines -join [Environment]::NewLine)
 }
 
 function Get-HtmlChangelogEntry {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string]$Version,
-
-		[Parameter(Mandatory = $true)]
-		[string[]]$Items
-	)
-
+	param([string]$Version,[string[]]$Items)
 	return '<h4>' + [System.Security.SecurityElement]::Escape($Version) + '</h4>' + (ConvertTo-HtmlList -Items $Items)
+}
+
+function Normalize-History {
+	param([array]$History,[string]$CurrentVersion,[string[]]$CurrentNotes,[string]$ConfigPath)
+	$normalized = @()
+	foreach ($entry in @($History)) {
+		if (-not $entry.PSObject.Properties.Name.Contains('version')) {
+			throw "Each release_history entry in $ConfigPath must include a version."
+		}
+		$entryVersion = [string]$entry.version
+		$entryNotes = @($entry.notes | Where-Object { $_ -and $_.Trim() })
+		if ([string]::IsNullOrWhiteSpace($entryVersion) -or $entryNotes.Count -eq 0) {
+			throw "Each release_history entry in $ConfigPath must include a version and at least one note."
+		}
+		$normalized += [pscustomobject]@{ version = $entryVersion; notes = $entryNotes }
+	}
+	$currentEntry = $normalized | Where-Object { $_.version -eq $CurrentVersion } | Select-Object -First 1
+	if (-not $currentEntry) {
+		$normalized = ,([pscustomobject]@{ version = $CurrentVersion; notes = $CurrentNotes }) + $normalized
+		$currentEntry = $normalized[0]
+	}
+	$currentEntry.notes = $CurrentNotes
+	return $normalized
+}
+
+function Get-UpdatedPluginFileContent {
+	param([string]$Content,[string]$Version,[string]$VersionPattern)
+	$updated = [regex]::Replace($Content, "(?m)^(\s*\*\s*Version:\s*)$VersionPattern", '${1}' + $Version, 1)
+	$updated = [regex]::Replace($updated, "define\(\s*'OFTUF_VERSION'\s*,\s*'$VersionPattern'\s*\);", "define( 'OFTUF_VERSION', '$Version' );", 1)
+	return $updated
+}
+
+function Get-UpdatedReadmeContent {
+	param([string]$Content,[string]$StableVersion,[array]$History)
+	$updated = [regex]::Replace($Content, "(?m)^(Stable tag:\s*)$versionPattern$", '${1}' + $StableVersion, 1)
+	$entries = foreach ($entry in $History) { Get-ReadmeChangelogEntry -Version $entry.version -Items $entry.notes }
+	$block = ($entries -join ([Environment]::NewLine + [Environment]::NewLine)) + [Environment]::NewLine
+	return [regex]::Replace($updated, '(?ms)(== Changelog ==\r?\n\r?\n).*$','${1}' + $block,1)
 }
 
 if (-not (Test-Path -LiteralPath $configPath)) {
@@ -85,92 +95,41 @@ if ($releaseNotes.Count -eq 0) {
 	throw "release_notes in $configPath must contain at least one item."
 }
 
-$releaseHistory = @()
-if ($config.PSObject.Properties.Name.Contains('release_history')) {
-	$releaseHistory = @($config.release_history)
-}
+$history = Normalize-History -History $config.release_history -CurrentVersion ([string]$config.version) -CurrentNotes $releaseNotes -ConfigPath $configPath
 
-if ($releaseHistory.Count -eq 0) {
-	$releaseHistory = @(
-		[pscustomobject]@{
-			version = $config.version
-			notes   = $releaseNotes
-		}
-	)
-}
-
-$normalizedHistory = @()
-foreach ($entry in $releaseHistory) {
-	if (-not $entry.PSObject.Properties.Name.Contains('version')) {
-		throw "Each release_history entry in $configPath must include a version."
-	}
-
-	$entryVersion = [string]$entry.version
-	$entryNotes = @($entry.notes | Where-Object { $_ -and $_.Trim() })
-
-	if ([string]::IsNullOrWhiteSpace($entryVersion) -or $entryNotes.Count -eq 0) {
-		throw "Each release_history entry in $configPath must include a version and at least one note."
-	}
-
-	$normalizedHistory += [pscustomobject]@{
-		version = $entryVersion
-		notes   = $entryNotes
-	}
-}
-
-$currentEntry = $normalizedHistory | Where-Object { $_.version -eq $config.version } | Select-Object -First 1
-if (-not $currentEntry) {
-	$normalizedHistory = ,([pscustomobject]@{
-		version = $config.version
-		notes   = $releaseNotes
-	}) + $normalizedHistory
-	$currentEntry = $normalizedHistory[0]
-}
-
-$currentEntry.notes = $releaseNotes
-
-if ($pluginFileContent -notmatch "Version:\s*([0-9]+(?:\.[0-9]+)*)") {
+if ($pluginFileContent -notmatch "Version:\s*$versionPattern") {
 	throw "Could not read plugin version from $mainPluginFile"
 }
 
-if ($pluginFileContent -notmatch "define\(\s*'OFTUF_VERSION'\s*,\s*'([0-9]+(?:\.[0-9]+)*)'\s*\);") {
+if ($pluginFileContent -notmatch "define\(\s*'OFTUF_VERSION'\s*,\s*'$versionPattern'\s*\);") {
 	throw "Could not read OFTUF_VERSION from $mainPluginFile"
 }
 
-$updatedPluginFileContent = [regex]::Replace(
-	$pluginFileContent,
-	"(?m)^(\s*\*\s*Version:\s*)([0-9]+(?:\.[0-9]+)*)",
-	'${1}' + $config.version,
-	1
-)
-$updatedPluginFileContent = [regex]::Replace(
-	$updatedPluginFileContent,
-	"define\(\s*'OFTUF_VERSION'\s*,\s*'([0-9]+(?:\.[0-9]+)*)'\s*\);",
-	"define( 'OFTUF_VERSION', '$($config.version)' );",
-	1
-)
+$updatedPluginFileContent = Get-UpdatedPluginFileContent -Content $pluginFileContent -Version ([string]$config.version) -VersionPattern $versionPattern
 Set-FileContentIfChanged -Path $mainPluginFile -Content $updatedPluginFileContent
 
-$updatedReadmeContent = [regex]::Replace(
-	$readmeContent,
-	'(?m)^(Stable tag:\s*)([0-9]+(?:\.[0-9]+)*)$',
-	'${1}' + $config.version,
-	1
-)
-$readmeChangelogEntries = foreach ($entry in $normalizedHistory) {
-	Get-ReadmeChangelogEntry -Version $entry.version -Items $entry.notes
+$stableTagVersion = if ('stable' -eq $Track) { [string]$config.version } else { $readmeContent | Select-String -Pattern "(?m)^Stable tag:\s*($versionPattern)$" | ForEach-Object { $_.Matches[0].Groups[1].Value } | Select-Object -First 1 }
+if ([string]::IsNullOrWhiteSpace($stableTagVersion)) {
+	$stableTagVersion = [string]$config.version
 }
-$readmeChangelogBlock = ($readmeChangelogEntries -join ([Environment]::NewLine + [Environment]::NewLine)) + [Environment]::NewLine
-$updatedReadmeContent = [regex]::Replace(
-	$updatedReadmeContent,
-	'(?ms)(== Changelog ==\r?\n\r?\n).*$',
-	'${1}' + $readmeChangelogBlock,
-	1
-)
+
+$updatedReadmeContent = Get-UpdatedReadmeContent -Content $readmeContent -StableVersion $stableTagVersion -History $history
 Set-FileContentIfChanged -Path $readmePath -Content $updatedReadmeContent
 
-if (Test-Path -LiteralPath $deploymentRoot) {
-	Remove-Item -LiteralPath $deploymentRoot -Recurse -Force
+if (-not (Test-Path -LiteralPath $deploymentRoot)) {
+	New-Item -ItemType Directory -Path $deploymentRoot -Force | Out-Null
+}
+
+$trackRoot = Join-Path $deploymentRoot $Track
+$trackStageRoot = Join-Path $stageRoot $Track
+$stagePluginRoot = Join-Path $trackStageRoot $config.slug
+
+if (Test-Path -LiteralPath $trackRoot) {
+	Remove-Item -LiteralPath $trackRoot -Recurse -Force
+}
+
+if (Test-Path -LiteralPath $trackStageRoot) {
+	Remove-Item -LiteralPath $trackStageRoot -Recurse -Force
 }
 
 New-Item -ItemType Directory -Path $stagePluginRoot -Force | Out-Null
@@ -188,50 +147,61 @@ $robocopyArgs = @(
 	'/NJH'
 	'/NJS'
 )
-
 & robocopy @robocopyArgs
-$exitCode = $LASTEXITCODE
-
-if ($exitCode -ge 8) {
-	throw "Deployment packaging failed with robocopy exit code $exitCode."
+if ($LASTEXITCODE -ge 8) {
+	throw "Deployment packaging failed for $Track with robocopy exit code $LASTEXITCODE."
 }
 
+$stagePluginFile = Join-Path $stagePluginRoot 'oft-upload-form.php'
+$stageReadmePath = Join-Path $stagePluginRoot 'readme.txt'
+$stagePluginContent = Get-Content $stagePluginFile -Raw
+$stagePluginContent = Get-UpdatedPluginFileContent -Content $stagePluginContent -Version ([string]$config.version) -VersionPattern $versionPattern
+Set-FileContentIfChanged -Path $stagePluginFile -Content $stagePluginContent
+
+$stageReadmeContent = Get-Content $stageReadmePath -Raw
+$stageReadmeContent = Get-UpdatedReadmeContent -Content $stageReadmeContent -StableVersion $stableTagVersion -History $history
+Set-FileContentIfChanged -Path $stageReadmePath -Content $stageReadmeContent
+
+$trackUrlBase = 'https://onefeaturetrap.com/plugin-downloads/' + $config.slug + '/' + $Track
 $jsonSections = [ordered]@{
 	description  = $config.sections.description
 	installation = $config.sections.installation
-	changelog    = (($normalizedHistory | ForEach-Object {
-		Get-HtmlChangelogEntry -Version $_.version -Items $_.notes
-	}) -join '')
+	changelog    = (($history | ForEach-Object { Get-HtmlChangelogEntry -Version $_.version -Items $_.notes }) -join '')
 }
-
 $jsonConfig = [ordered]@{
 	name          = $config.name
 	slug          = $config.slug
 	version       = $config.version
+	channel       = $Track
 	requires      = $config.requires
 	tested        = $config.tested
 	requires_php  = $config.requires_php
 	last_updated  = $config.last_updated
 	homepage      = $config.homepage
-	download_url  = $config.download_url
+	download_url  = $trackUrlBase + '/plugin.zip'
 	sections      = $jsonSections
 	banners       = $config.banners
 	icons         = $config.icons
 }
 
-& tar -a -c -f $zipPath -C $stageRoot 'oft-upload-form'
+New-Item -ItemType Directory -Path $trackRoot -Force | Out-Null
+$zipPath = Join-Path $trackRoot 'plugin.zip'
+$jsonPath = Join-Path $trackRoot 'metadata.json'
+
+& tar -a -c -f $zipPath -C $trackStageRoot $config.slug
 if ($LASTEXITCODE -ne 0) {
-	throw "ZIP packaging failed with tar exit code $LASTEXITCODE."
+	throw "ZIP packaging failed for $Track with tar exit code $LASTEXITCODE."
 }
 
-$json = $jsonConfig | ConvertTo-Json -Depth 10
-$json = $json.Replace('\u003c', '<').Replace('\u003e', '>').Replace('\u0026', '&')
-$jsonBytes = [System.Text.Encoding]::UTF8.GetBytes($json + [Environment]::NewLine)
-[System.IO.File]::WriteAllBytes($jsonPath, $jsonBytes)
+$json = ($jsonConfig | ConvertTo-Json -Depth 10).Replace('\u003c', '<').Replace('\u003e', '>').Replace('\u0026', '&')
+[System.IO.File]::WriteAllBytes($jsonPath, [System.Text.Encoding]::UTF8.GetBytes($json + [Environment]::NewLine))
 
-Remove-Item -LiteralPath $stageRoot -Recurse -Force
+if (Test-Path -LiteralPath $trackStageRoot) {
+	Remove-Item -LiteralPath $trackStageRoot -Recurse -Force
+}
 
 Write-Host "Deployment package created:"
-Write-Host "ZIP:  $zipPath"
-Write-Host "JSON: $jsonPath"
+Write-Host "Track:   $Track"
+Write-Host "ZIP:     $zipPath"
+Write-Host "JSON:    $jsonPath"
 Write-Host "Version: $($config.version)"

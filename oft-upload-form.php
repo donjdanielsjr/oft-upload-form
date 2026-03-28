@@ -3,7 +3,7 @@
  * Plugin Name: OFT Upload Form
  * Plugin URI:  https://onefeaturetrap.com/
  * Description: Lightweight contact form with file upload - live in under a minute, no setup required.
- * Version:     1.6.6
+ * Version:     1.6.7-beta.1
  * Author:      One Feature Trap
  * Author URI:  https://onefeaturetrap.com/
  * Text Domain: oft-upload-form
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OFTUF_VERSION', '1.6.6' );
+define( 'OFTUF_VERSION', '1.6.7-beta.1' );
 define( 'OFTUF_PLUGIN_FILE', __FILE__ );
 define( 'OFTUF_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'OFTUF_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
@@ -38,15 +38,6 @@ require_once OFTUF_PLUGIN_PATH . 'includes/class-form-handler.php';
 require_once OFTUF_PLUGIN_PATH . 'includes/class-shortcode.php';
 require_once OFTUF_PLUGIN_PATH . 'includes/class-admin.php';
 require_once OFTUF_PLUGIN_PATH . 'includes/class-plugin.php';
-
-new OFT_Plugin_Updater(
-	array(
-		'plugin_file'  => __FILE__,
-		'plugin_slug'  => 'oft-upload-form',
-		'plugin_name'  => 'OFT Upload Form',
-		'metadata_url' => 'https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json',
-	)
-);
 
 register_activation_hook( __FILE__, array( 'OFTUF_Activator', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'OFTUF_Deactivator', 'deactivate' ) );

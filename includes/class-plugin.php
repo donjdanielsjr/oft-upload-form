@@ -61,6 +61,13 @@ class OFTUF_Plugin {
 	protected $admin;
 
 	/**
+	 * Updater service.
+	 *
+	 * @var OFT_Plugin_Updater
+	 */
+	protected $updater;
+
+	/**
 	 * Wire services together.
 	 */
 	public function __construct() {
@@ -68,9 +75,28 @@ class OFTUF_Plugin {
 		$this->validator    = new OFTUF_Validator();
 		$this->uploader     = new OFTUF_Uploader();
 		$this->mailer       = new OFTUF_Mailer();
+		$this->updater      = new OFT_Plugin_Updater(
+			array(
+				'plugin_file'     => OFTUF_PLUGIN_FILE,
+				'plugin_slug'     => 'oft-upload-form',
+				'plugin_name'     => 'OFT Upload Form',
+				'channels'        => array(
+					'stable' => array(
+						'label'        => 'Stable',
+						'metadata_url' => 'https://onefeaturetrap.com/plugin-downloads/oft-upload-form/stable/metadata.json',
+					),
+					'beta'   => array(
+						'label'        => 'Beta',
+						'metadata_url' => 'https://onefeaturetrap.com/plugin-downloads/oft-upload-form/beta/metadata.json',
+					),
+				),
+				'default_channel' => 'stable',
+				'track_label'     => 'Update Track',
+			)
+		);
 		$this->form_handler = new OFTUF_Form_Handler( $this->validator, $this->uploader, $this->mailer, $this->database );
 		$this->shortcode    = new OFTUF_Shortcode();
-		$this->admin        = new OFTUF_Admin( $this->database, $this->mailer );
+		$this->admin        = new OFTUF_Admin( $this->database, $this->mailer, $this->updater );
 	}
 
 	/**

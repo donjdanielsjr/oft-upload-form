@@ -10,18 +10,22 @@ Reusable updater module documentation lives here:
 
 Update files for this plugin:
 
-- Metadata JSON: `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json`
-- Download zip: `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.zip`
+- Stable metadata: `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/stable/metadata.json`
+- Stable zip: `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/stable/plugin.zip`
+- Beta metadata: `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/beta/metadata.json`
+- Beta zip: `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/beta/plugin.zip`
 
-The updater reads the installed version from the plugin header in `oft-upload-form.php` and compares it against the remote `version` value in `oft-upload-form.json`.
+The updater reads the installed version from the plugin header in `oft-upload-form.php` and compares it against the remote `version` value from the currently selected track.
 
 ## Release Source Of Truth
 
 - `deployment.config.json`
   This file is the release metadata source of truth for deployment builds.
-- F5 runs the deployment build script and generates:
-  - `deployment/oft-upload-form.zip`
-  - `deployment/oft-upload-form.json`
+- F5 or the deployment script generates one track at a time:
+  - `deployment/stable/plugin.zip`
+  - `deployment/stable/metadata.json`
+  - `deployment/beta/plugin.zip`
+  - `deployment/beta/metadata.json`
 - The deployment script writes JSON as UTF-8 without BOM to avoid update and AJAX response issues.
 
 ## Files That Control Versions
@@ -34,36 +38,36 @@ The updater reads the installed version from the plugin header in `oft-upload-fo
   `Stable tag:` and the top changelog entry are synced during deployment.
 - `deployment.config.json`
   Release metadata used to generate the deployment JSON and sync local version references during deployment.
-- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.zip`
-  Release zip downloaded during updates.
-- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json`
-  Generated remote metadata used by WordPress update checks.
+- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/stable/plugin.zip`
+  Stable release zip downloaded by sites following the Stable track.
+- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/stable/metadata.json`
+  Stable metadata used by WordPress update checks for the Stable track.
+- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/beta/plugin.zip`
+  Beta release zip downloaded by sites following the Beta track.
+- `https://onefeaturetrap.com/plugin-downloads/oft-upload-form/beta/metadata.json`
+  Beta metadata used by WordPress update checks for the Beta track.
 
 ## Standard Release Process
 
 1. Finish the code changes for the release.
-2. Pick the new version number, for example `1.0.7`.
+2. Pick the new version number, for example `1.0.7` for Stable or `1.0.7-beta.1` for Beta.
 3. Update `deployment.config.json`:
    - Change `version`
    - Change `last_updated`
    - Change `release_notes`
-4. Press F5 or run the deployment task to build:
-   - `deployment/oft-upload-form.zip`
-   - `deployment/oft-upload-form.json`
+4. Build the track you want to publish:
+   - Beta: `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-plugin.ps1 -Track beta`
+   - Stable: `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-plugin.ps1 -Track stable`
 5. The deployment script syncs these local files from `deployment.config.json` before packaging:
    - `oft-upload-form.php` plugin header `Version:`
    - `oft-upload-form.php` `OFTUF_VERSION`
-   - `readme.txt` `Stable tag:`
    - `readme.txt` top changelog entry for the current version
-   - `deployment/oft-upload-form.json` `sections.changelog`
+   - `readme.txt` `Stable tag:` only when building the Stable track
+   - the selected track `metadata.json` changelog
 6. Build output uses `oft-upload-form` as the zip root folder.
-7. Upload these two files to `/plugin-downloads/` on the server:
-   - `oft-upload-form.json`
-   - `oft-upload-form.zip`
-8. Confirm these public URLs load:
-   - `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.zip`
-   - `https://onefeaturetrap.com/plugin-downloads/oft-upload-form.json`
-9. In wp-admin, force an update check and confirm the release appears.
+7. Upload only the selected track folder contents to `/plugin-downloads/oft-upload-form/{track}/` on the server.
+8. Confirm the matching public URLs load for that track.
+9. In wp-admin, switch `Update Track` if needed, refresh updates, and confirm the release appears.
 
 ## Important Version Rule
 
@@ -77,9 +81,9 @@ Example:
 
 If both values match, no update is offered.
 
-## Generated `oft-upload-form.json`
+## Generated `metadata.json`
 
-This file is generated from `deployment.config.json` during the deployment build:
+This file is generated from `deployment.config.json` during the deployment build for the selected track:
 
 ```json
 {
@@ -91,7 +95,8 @@ This file is generated from `deployment.config.json` during the deployment build
   "requires_php": "7.4",
   "last_updated": "2026-03-27",
   "homepage": "https://onefeaturetrap.com/",
-  "download_url": "https://onefeaturetrap.com/plugin-downloads/oft-upload-form.zip",
+  "channel": "beta",
+  "download_url": "https://onefeaturetrap.com/plugin-downloads/oft-upload-form/beta/plugin.zip",
   "sections": {
     "description": "Lightweight contact form plugin with shortcode support, a single file upload field, email notifications, and submission storage.",
     "installation": "Install and activate the plugin.",
@@ -108,7 +113,7 @@ This file is generated from `deployment.config.json` during the deployment build
 
 - `deployment.config.json` stores release notes as a plain `release_notes` array.
 - The deployment script renders those notes into:
-  - HTML for `deployment/oft-upload-form.json`
+  - HTML for the selected track `metadata.json`
   - the current version entry in `readme.txt`
 
 ### Force an update check
@@ -119,7 +124,7 @@ This file is generated from `deployment.config.json` during the deployment build
 
 ### Test the native "View details" modal
 
-1. Publish a valid `oft-upload-form.json`.
+1. Publish a valid track `metadata.json`.
 2. Ensure the remote version is higher than the installed version.
 3. Go to `Plugins`.
 4. Open the plugin details modal from the update UI.
@@ -128,7 +133,7 @@ This file is generated from `deployment.config.json` during the deployment build
 ### Simulate a version bump
 
 1. Keep the installed plugin at `1.0.0`.
-2. Set remote `oft-upload-form.json` to `1.0.7`.
+2. Set remote track `metadata.json` to `1.0.7`.
 3. Upload the new release zip.
 4. Refresh metadata.
 5. Confirm WordPress shows the update.
@@ -156,7 +161,7 @@ It shows:
 
 - Plugin slug
 - Installed version
-- Metadata URL
+- Metadata URL for the selected track
 - Last fetched metadata
 - Whether an update is available
 

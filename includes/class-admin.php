@@ -26,14 +26,23 @@ class OFTUF_Admin {
 	protected $mailer;
 
 	/**
+	 * Updater service.
+	 *
+	 * @var OFT_Plugin_Updater
+	 */
+	protected $updater;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param OFTUF_Database $database Database service.
-	 * @param OFTUF_Mailer   $mailer   Mailer service.
+	 * @param OFTUF_Mailer        $mailer   Mailer service.
+	 * @param OFT_Plugin_Updater $updater  Updater service.
 	 */
-	public function __construct( $database, $mailer ) {
+	public function __construct( $database, $mailer, $updater ) {
 		$this->database = $database;
 		$this->mailer   = $mailer;
+		$this->updater  = $updater;
 	}
 
 	/**
@@ -141,6 +150,7 @@ class OFTUF_Admin {
 		}
 
 		$test_status = isset( $_GET['oftuf_test_email'] ) ? sanitize_key( wp_unslash( $_GET['oftuf_test_email'] ) ) : '';
+		$updater     = $this->updater;
 
 		include OFTUF_PLUGIN_PATH . 'templates/settings-page.php';
 	}

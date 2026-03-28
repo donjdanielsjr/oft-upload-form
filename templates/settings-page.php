@@ -81,4 +81,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</a>
 		</p>
 	</div>
+
+	<?php
+	if ( isset( $updater ) && $updater instanceof OFT_Plugin_Updater ) {
+		$updater->render_channel_settings_card(
+			array(
+				'heading'   => __( 'Updates', 'oft-upload-form' ),
+				'help_text' => __( 'Choose whether this site should follow stable releases or beta builds for OFT Upload Form.', 'oft-upload-form' ),
+			)
+		);
+	}
+	?>
 </div>
