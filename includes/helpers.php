@@ -190,6 +190,113 @@ function oftuf_get_default_upload_size() {
 	return max( $choices );
 }
 
+function oftuf_get_default_text_color() {
+	return '';
+}
+
+function oftuf_get_default_button_background_color() {
+	return '';
+}
+
+function oftuf_get_default_button_text_color() {
+	return '';
+}
+
+function oftuf_get_default_font_size() {
+	return '';
+}
+
+function oftuf_get_font_size_choices() {
+	return array(
+		'' => __( 'Theme default', 'oft-upload-form' ),
+		'0.875rem' => __( 'Small', 'oft-upload-form' ),
+		'1rem' => __( 'Medium', 'oft-upload-form' ),
+		'1.125rem' => __( 'Large', 'oft-upload-form' ),
+		'1.25rem' => __( 'Extra large', 'oft-upload-form' ),
+	);
+}
+
+function oftuf_sanitize_hex_color_setting( $value ) {
+	$value = is_string( $value ) ? trim( $value ) : '';
+
+	if ( '' === $value ) {
+		return '';
+	}
+
+	$sanitized = sanitize_hex_color( $value );
+
+	return $sanitized ? $sanitized : '';
+}
+
+function oftuf_get_text_color() {
+	return oftuf_sanitize_hex_color_setting( get_option( 'oftuf_text_color', oftuf_get_default_text_color() ) );
+}
+
+function oftuf_get_button_background_color() {
+	return oftuf_sanitize_hex_color_setting( get_option( 'oftuf_button_background_color', oftuf_get_default_button_background_color() ) );
+}
+
+function oftuf_get_button_text_color() {
+	return oftuf_sanitize_hex_color_setting( get_option( 'oftuf_button_text_color', oftuf_get_default_button_text_color() ) );
+}
+
+function oftuf_sanitize_font_size_setting( $value ) {
+	$value = is_string( $value ) ? trim( $value ) : '';
+	$choices = oftuf_get_font_size_choices();
+
+	return array_key_exists( $value, $choices ) ? $value : oftuf_get_default_font_size();
+}
+
+function oftuf_get_font_size() {
+	return oftuf_sanitize_font_size_setting( get_option( 'oftuf_font_size', oftuf_get_default_font_size() ) );
+}
+
+function oftuf_hex_to_rgb( $color ) {
+	$color = oftuf_sanitize_hex_color_setting( $color );
+
+	if ( '' === $color ) {
+		return null;
+	}
+
+	$hex = ltrim( $color, '#' );
+
+	if ( 3 === strlen( $hex ) ) {
+		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+	}
+
+	if ( 6 !== strlen( $hex ) ) {
+		return null;
+	}
+
+	return array(
+		'r' => hexdec( substr( $hex, 0, 2 ) ),
+		'g' => hexdec( substr( $hex, 2, 2 ) ),
+		'b' => hexdec( substr( $hex, 4, 2 ) ),
+	);
+}
+
+function oftuf_adjust_hex_brightness( $color, $percent ) {
+	$rgb = oftuf_hex_to_rgb( $color );
+
+	if ( ! $rgb ) {
+		return '';
+	}
+
+	$percent = max( -1, min( 1, (float) $percent ) );
+
+	foreach ( $rgb as $channel => $value ) {
+		if ( $percent < 0 ) {
+			$rgb[ $channel ] = (int) round( $value * ( 1 + $percent ) );
+		} else {
+			$rgb[ $channel ] = (int) round( $value + ( ( 255 - $value ) * $percent ) );
+		}
+
+		$rgb[ $channel ] = max( 0, min( 255, $rgb[ $channel ] ) );
+	}
+
+	return sprintf( '#%02x%02x%02x', $rgb['r'], $rgb['g'], $rgb['b'] );
+}
+
 function oftuf_get_saved_upload_size() {
 	$saved_size = (int) get_option( 'oftuf_max_upload_size', oftuf_get_default_upload_size() );
 

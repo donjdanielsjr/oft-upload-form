@@ -1,4 +1,4 @@
-﻿.oftuf-form-wrapper {
+.oftuf-form-wrapper {
 	max-width: 42rem;
 	margin: 1.5rem 0;
 }
@@ -11,13 +11,15 @@
 .oftuf-field label {
 	display: block;
 	margin-bottom: 0.375rem;
+	color: var(--oftuf-text-color, inherit);
+	font-size: var(--oftuf-font-size, inherit);
 }
 
 .oftuf-field input[type="text"],
 .oftuf-field input[type="email"],
 .oftuf-field input[type="file"],
 .oftuf-field textarea,
-.oftuf-submit {
+.oftuf-button {
 	font: inherit;
 }
 
@@ -41,8 +43,8 @@
 
 .oftuf-help {
 	margin: 0.5rem 0 0;
-	font-size: 0.875rem;
-	color: #50575e;
+	font-size: var(--oftuf-font-size, 0.875rem);
+	color: var(--oftuf-text-color, inherit);
 }
 
 .oftuf-required {
@@ -57,19 +59,20 @@
 	overflow: hidden;
 }
 
-.oftuf-submit {
+.oftuf-button {
 	padding: 0.75rem 1.25rem;
-	border: 1px solid #1f2933;
+	border: 1px solid var(--oftuf-button-border-color, #1f2933);
 	border-radius: 4px;
-	background: #1f2933;
-	color: #fff;
+	background: var(--oftuf-button-background-color, #1f2933);
+	color: var(--oftuf-button-text-color, #fff);
 	cursor: pointer;
+	font-size: var(--oftuf-font-size, inherit);
 }
 
-.oftuf-submit:hover,
-.oftuf-submit:focus {
-	background: #111827;
-	border-color: #111827;
+.oftuf-button:hover,
+.oftuf-button:focus {
+	background: var(--oftuf-button-hover-background-color, #111827);
+	border-color: var(--oftuf-button-hover-background-color, #111827);
 }
 
 .oftuf-notice {
@@ -93,4 +96,3 @@
 	margin: 0;
 	padding-left: 1.2rem;
 }
-

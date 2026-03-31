@@ -77,7 +77,7 @@ $old = isset( $context['old'] ) ? $context['old'] : array();
 		<input type="hidden" name="oftuf_redirect_to" value="<?php echo esc_url( $context['redirect_to'] ); ?>">
 
 		<div class="oftuf-actions">
-			<button class="oftuf-submit" type="submit"><?php esc_html_e( 'Send', 'oft-upload-form' ); ?></button>
+			<button class="oftuf-button oftuf-submit" type="submit"><?php esc_html_e( 'Send', 'oft-upload-form' ); ?></button>
 		</div>
 	</form>
 </div>

@@ -24,6 +24,10 @@ class OFTUF_Activator {
 		$database->create_table();
 		add_option( 'oftuf_allowed_extensions', oftuf_get_default_allowed_extensions() );
 		add_option( 'oftuf_max_upload_size', oftuf_get_default_upload_size() );
+		add_option( 'oftuf_text_color', oftuf_get_default_text_color() );
+		add_option( 'oftuf_button_background_color', oftuf_get_default_button_background_color() );
+		add_option( 'oftuf_button_text_color', oftuf_get_default_button_text_color() );
+		add_option( 'oftuf_font_size', oftuf_get_default_font_size() );
 		oftuf_ensure_private_upload_dir();
 	}
 }

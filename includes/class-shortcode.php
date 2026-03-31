@@ -75,6 +75,12 @@ class OFTUF_Shortcode {
 			OFTUF_VERSION
 		);
 
+		$inline_css = $this->get_inline_style_overrides();
+
+		if ( '' !== $inline_css ) {
+			wp_add_inline_style( 'oftuf-frontend', $inline_css );
+		}
+
 		wp_enqueue_script(
 			'oftuf-frontend',
 			OFTUF_PLUGIN_URL . 'assets/js/frontend.js',
@@ -82,6 +88,43 @@ class OFTUF_Shortcode {
 			OFTUF_VERSION,
 			true
 		);
+	}
+
+	/**
+	 * Build inline style overrides from saved appearance settings.
+	 *
+	 * @return string
+	 */
+	protected function get_inline_style_overrides() {
+		$declarations = array();
+		$text_color = oftuf_get_text_color();
+		$button_background_color = oftuf_get_button_background_color();
+		$button_text_color = oftuf_get_button_text_color();
+		$font_size = oftuf_get_font_size();
+
+		if ( '' !== $font_size ) {
+			$declarations[] = '--oftuf-font-size:' . $font_size;
+		}
+
+		if ( '' !== $text_color ) {
+			$declarations[] = '--oftuf-text-color:' . $text_color;
+		}
+
+		if ( '' !== $button_background_color ) {
+			$declarations[] = '--oftuf-button-background-color:' . $button_background_color;
+			$declarations[] = '--oftuf-button-border-color:' . $button_background_color;
+			$declarations[] = '--oftuf-button-hover-background-color:' . oftuf_adjust_hex_brightness( $button_background_color, -0.12 );
+		}
+
+		if ( '' !== $button_text_color ) {
+			$declarations[] = '--oftuf-button-text-color:' . $button_text_color;
+		}
+
+		if ( empty( $declarations ) ) {
+			return '';
+		}
+
+		return '.oftuf-form-wrapper{' . implode( ';', $declarations ) . ';}';
 	}
 
 	/**

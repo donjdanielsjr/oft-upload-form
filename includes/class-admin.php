@@ -70,13 +70,13 @@ class OFTUF_Admin {
 			array( $this, 'render_settings_page' )
 		);
 
-		$upload_settings_hook = add_submenu_page(
+		$appearance_hook = add_submenu_page(
 			'oftuf-settings',
-			__( 'Settings', 'oft-upload-form' ),
-			__( 'Settings', 'oft-upload-form' ),
+			__( 'Appearance', 'oft-upload-form' ),
+			__( 'Appearance', 'oft-upload-form' ),
 			'manage_options',
-			'oftuf-upload-settings',
-			array( $this, 'render_upload_settings_page' )
+			'oftuf-appearance',
+			array( $this, 'render_appearance_page' )
 		);
 
 		$submissions_hook = add_submenu_page(
@@ -90,7 +90,7 @@ class OFTUF_Admin {
 
 		add_action( 'load-' . $hook, array( $this, 'enqueue_assets' ) );
 		add_action( 'load-' . $setup_hook, array( $this, 'enqueue_assets' ) );
-		add_action( 'load-' . $upload_settings_hook, array( $this, 'enqueue_assets' ) );
+		add_action( 'load-' . $appearance_hook, array( $this, 'enqueue_assets' ) );
 		add_action( 'load-' . $submissions_hook, array( $this, 'enqueue_assets' ) );
 	}
 
@@ -107,10 +107,12 @@ class OFTUF_Admin {
 			OFTUF_VERSION
 		);
 
+		wp_enqueue_style( 'wp-color-picker' );
+
 		wp_enqueue_script(
 			'oftuf-admin',
 			OFTUF_PLUGIN_URL . 'assets/js/admin.js',
-			array(),
+			array( 'jquery', 'wp-color-picker' ),
 			OFTUF_VERSION,
 			true
 		);
@@ -150,35 +152,41 @@ class OFTUF_Admin {
 		}
 
 		$test_status = isset( $_GET['oftuf_test_email'] ) ? sanitize_key( wp_unslash( $_GET['oftuf_test_email'] ) ) : '';
-		$updater     = $this->updater;
-
-		include OFTUF_PLUGIN_PATH . 'templates/settings-page.php';
-	}
-
-	/**
-	 * Render the upload settings page.
-	 *
-	 * @return void
-	 */
-	public function render_upload_settings_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'oft-upload-form' ) );
-		}
-
-		$settings_status    = isset( $_GET['oftuf_settings'] ) ? sanitize_key( wp_unslash( $_GET['oftuf_settings'] ) ) : '';
+		$settings_status = isset( $_GET['oftuf_settings'] ) ? sanitize_key( wp_unslash( $_GET['oftuf_settings'] ) ) : '';
 		$allowed_extensions = oftuf_get_allowed_extensions();
-		$file_type_labels   = oftuf_get_file_type_labels();
+		$file_type_labels = oftuf_get_file_type_labels();
 		$upload_size_choices = oftuf_get_available_upload_size_choices();
 		$selected_upload_size = oftuf_get_saved_upload_size();
 		$server_upload_limit = oftuf_get_server_upload_limit();
 		$host_limit_notice = $server_upload_limit > 0 && $server_upload_limit < 25 * MB_IN_BYTES;
+		$updater     = $this->updater;
 
 		if ( ! isset( $upload_size_choices[ $selected_upload_size ] ) ) {
 			$available_sizes      = array_keys( $upload_size_choices );
 			$selected_upload_size = ! empty( $available_sizes ) ? max( $available_sizes ) : oftuf_get_default_upload_size();
 		}
 
-		include OFTUF_PLUGIN_PATH . 'templates/upload-settings-page.php';
+		include OFTUF_PLUGIN_PATH . 'templates/settings-page.php';
+	}
+
+	/**
+	 * Render the appearance page.
+	 *
+	 * @return void
+	 */
+	public function render_appearance_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'oft-upload-form' ) );
+		}
+
+		$appearance_status = isset( $_GET['oftuf_appearance'] ) ? sanitize_key( wp_unslash( $_GET['oftuf_appearance'] ) ) : '';
+		$text_color = oftuf_get_text_color();
+		$button_background_color = oftuf_get_button_background_color();
+		$button_text_color = oftuf_get_button_text_color();
+		$font_size = oftuf_get_font_size();
+		$font_size_choices = oftuf_get_font_size_choices();
+
+		include OFTUF_PLUGIN_PATH . 'templates/appearance-page.php';
 	}
 
 	/**
@@ -282,7 +290,7 @@ class OFTUF_Admin {
 			return;
 		}
 
-		if ( empty( $_POST['page'] ) || 'oftuf-upload-settings' !== sanitize_key( wp_unslash( $_POST['page'] ) ) ) {
+		if ( empty( $_POST['page'] ) || 'oftuf-settings' !== sanitize_key( wp_unslash( $_POST['page'] ) ) ) {
 			return;
 		}
 
@@ -305,7 +313,7 @@ class OFTUF_Admin {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
-						'page'           => 'oftuf-upload-settings',
+						'page'           => 'oftuf-settings',
 						'oftuf_settings' => 'missing_types',
 					),
 					admin_url( 'admin.php' )
@@ -324,8 +332,54 @@ class OFTUF_Admin {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'           => 'oftuf-upload-settings',
+					'page'           => 'oftuf-settings',
 					'oftuf_settings' => 'saved',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Save appearance settings.
+	 *
+	 * @return void
+	 */
+	public function handle_appearance_settings_save() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( empty( $_POST['page'] ) || 'oftuf-appearance' !== sanitize_key( wp_unslash( $_POST['page'] ) ) ) {
+			return;
+		}
+
+		if ( empty( $_POST['oftuf_save_appearance_settings'] ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to save settings.', 'oft-upload-form' ) );
+		}
+
+		check_admin_referer( 'oftuf_save_appearance_settings' );
+
+		$text_color = isset( $_POST['oftuf_text_color'] ) ? oftuf_sanitize_hex_color_setting( wp_unslash( $_POST['oftuf_text_color'] ) ) : '';
+		$button_background_color = isset( $_POST['oftuf_button_background_color'] ) ? oftuf_sanitize_hex_color_setting( wp_unslash( $_POST['oftuf_button_background_color'] ) ) : '';
+		$button_text_color = isset( $_POST['oftuf_button_text_color'] ) ? oftuf_sanitize_hex_color_setting( wp_unslash( $_POST['oftuf_button_text_color'] ) ) : '';
+		$font_size = isset( $_POST['oftuf_font_size'] ) ? oftuf_sanitize_font_size_setting( wp_unslash( $_POST['oftuf_font_size'] ) ) : '';
+
+		update_option( 'oftuf_text_color', $text_color );
+		update_option( 'oftuf_button_background_color', $button_background_color );
+		update_option( 'oftuf_button_text_color', $button_text_color );
+		update_option( 'oftuf_font_size', $font_size );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'             => 'oftuf-appearance',
+					'oftuf_appearance' => 'saved',
 				),
 				admin_url( 'admin.php' )
 			)

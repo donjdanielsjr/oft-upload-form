@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 <div class="wrap oftuf-admin-page">
-	<h1><?php esc_html_e( 'Submissions', 'oft-upload-form' ); ?></h1>
+	<h1><?php esc_html_e( 'Review Submissions', 'oft-upload-form' ); ?></h1>
 
 	<?php $deleted_attachments = isset( $_GET['oftuf_attachments'] ) ? absint( $_GET['oftuf_attachments'] ) : 0; ?>
 

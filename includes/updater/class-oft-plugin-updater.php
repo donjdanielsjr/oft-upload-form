@@ -405,7 +405,7 @@ class OFT_Plugin_Updater {
 		if ( ! is_admin() || ! current_user_can( 'manage_options' ) || empty( $_GET['oft_update_checked'] ) ) {
 			return;
 		}
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $this->plugin_name . ' update data refreshed. If a newer version exists, WordPress will show the normal update link on the Plugins screen.' ) . '</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $this->plugin_name . ' checked for updates again. If a newer version is available, WordPress will show the normal update link on the Plugins screen.' ) . '</p></div>';
 	}
 
 	public function maybe_render_channel_notice() {
